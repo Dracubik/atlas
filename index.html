@@ -18,10 +18,18 @@ button {
   padding: 0;
   margin: 0;
   cursor: pointer;
-  text-decoration: none;
+  text-decoration: none !important;
   -webkit-appearance: none;
   appearance: none;
   outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Belt-and-suspenders: kill underlines on ALL interactive elements */
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+a.card, a.card *, a.card-sub {
+  text-decoration: none !important;
 }
 
 body {
@@ -183,78 +191,89 @@ header {
 }
 #reset-btn:hover { background: #FAF8F3; color: #1C1814; }
 
-/* ── PANEL ───────────────────────────────────── */
+/* ── PANEL — right-side frosted glass overlay ──────────────────── */
 #panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 360px;
+  z-index: 50;
+  /* Solid base — blur added only on desktop via min-width query below */
   background: #FEFCF8;
-  border-top: 1px solid #E5DED2;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.28s ease-out;
-  flex-shrink: 0;
+  border-left: 1px solid rgba(229, 222, 210, 0.65);
+  box-shadow: -6px 0 36px rgba(28, 24, 18, 0.13);
+  transform: translateX(110%);
+  transition: transform 0.26s cubic-bezier(.4,0,.2,1);
   z-index: 30;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-#panel.open { max-height: 360px; }
+/* Frosted glass only on desktop where GPU compositing is reliable */
+@media (min-width: 641px) {
+  #panel {
+    background: rgba(252, 250, 246, 0.92);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+}
+#panel.open { transform: translateX(0); }
 .panel-handle { display: none; }
 #panel-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 13px 24px 10px;
-  border-bottom: 1px solid #EDE7DC;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(229, 222, 210, 0.7);
+  flex-shrink: 0;
 }
+.panel-head-text { display: flex; flex-direction: column; }
 #panel-country {
   font-family: 'Playfair Display', serif;
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 400;
   color: #1C1814;
+  line-height: 1.3;
 }
-#panel-n { font-size: 12px; color: #A09688; margin-left: 10px; }
+#panel-n { font-size: 11px; color: #A09688; margin-top: 3px; }
 #close-btn {
-  font-size: 24px; line-height: 1;
+  font-size: 22px; line-height: 1;
   color: #B0A898;
-  padding: 1px 5px;
+  padding: 1px 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
   border-radius: 4px;
   transition: color 0.12s;
 }
 #close-btn:hover { color: #1C1814; }
-
 #grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  padding: 8px 16px 16px;
-  gap: 3px;
+  grid-template-columns: 1fr;
+  padding: 6px 12px 20px;
+  gap: 2px;
   overflow-y: auto;
-  max-height: 288px;
+  -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+  overscroll-behavior: contain;      /* don't propagate scroll to map */
+  touch-action: pan-y;
+  flex: 1;
+  min-height: 0;
 }
-
-a.card, div.card-static {
-  display: block;
-  padding: 9px 12px;
-  border-radius: 7px;
-  transition: background 0.12s;
-}
-a.card { text-decoration: none; }
-a.card:hover { background: #F0EAE0; }
-/* Image strip sits BELOW name+chips, spans the full card width */
-.card-thumbs {
-  display: flex;
-  gap: 4px;
-  margin-top: 7px;
-}
+/* Image strip: below name+chips, max 2 images */
+.card-thumbs { display: flex; gap: 5px; margin-top: 8px; }
 .card-thumb {
-  height: 72px;
-  width: 100%;
-  max-width: 120px;
+  height: 110px;
   flex: 1 1 0;
   min-width: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   object-fit: cover;
   cursor: zoom-in;
-  box-shadow: 0 0 0 1px rgba(28,24,20,0.08);
+  box-shadow: 0 0 0 1px rgba(28,24,20,0.10);
   display: block;
 }
-/* When 3 images are present each gets full third — override max-width */
-.card-thumbs:has(> :nth-child(2)) .card-thumb { max-width: none; }
+.card-thumbs > :nth-child(n+3) { display: none; }
+/* Single image: don't stretch — cap width so it looks like a thumbnail */
+.card-thumbs > img:only-child { max-width: 52%; }
 .card-name {
   display: block;
   font-size: 13px;
@@ -324,9 +343,8 @@ a.card:hover { background: #F0EAE0; }
 #backdrop {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(28, 24, 18, 0.30);
+  background: rgba(28, 24, 18, 0.10);
   z-index: 40;
-  backdrop-filter: blur(1px);
 }
 
 /* ── MOBILE ──────────────────────────────────── */
@@ -336,29 +354,66 @@ a.card:hover { background: #F0EAE0; }
   .h-by { display: none; }
   .h-stats { display: none; }
   .bar { padding: 7px 14px; }
+
+  /* Panel is itself the scroll container — most reliable on iOS/Android */
   #panel {
-    position: fixed; bottom: 0; left: 0; right: 0;
+    position: fixed;
+    right: 0; left: 0; bottom: 0;
+    top: auto !important;
+    width: 100% !important;
     z-index: 50;
+    transform: none !important;
+    height: 0;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    transition: height 0.28s ease-out !important;
     border-radius: 14px 14px 0 0;
-    box-shadow: 0 -4px 28px rgba(0,0,0,0.20);
-    border-top: none;
-    max-height: 0;
+    border-left: none;
+    border-top: 1px solid #E5DED2;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.16);
+    background: #FEFCF8 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* grid scrolls freely inside */
+    display: block;
   }
-  #panel.open { max-height: 78vh; }
+  #panel.open { height: 78svh; }
+
+  /* Handle and head stick to the top while content scrolls */
   .panel-handle {
     display: block;
     width: 36px; height: 4px;
     background: #D8D0C4;
     border-radius: 2px;
-    margin: 10px auto 2px;
+    margin: 10px auto 4px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
-  #panel-head { padding: 8px 18px 10px; }
+  #panel-head {
+    padding: 8px 18px 10px;
+    position: sticky;
+    top: 24px; /* below handle */
+    background: #FEFCF8;
+    border-bottom: 1px solid #EDE7DC;
+    z-index: 1;
+  }
   #panel-country { font-size: 17px; }
+
+  /* Grid: natural height, no overflow — panel scrolls */
   #grid {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 6px 14px 40px;
+    flex: none;
+    display: grid;
     grid-template-columns: 1fr;
-    max-height: calc(78vh - 68px);
-    padding: 4px 14px 28px;
+    gap: 2px;
   }
+
+  .card-thumb { height: 88px; }
   #backdrop.visible { display: block; }
   #hint { display: none; }
   #reset-btn { bottom: 8px; right: 8px; }
@@ -393,7 +448,7 @@ a.card:hover { background: #F0EAE0; }
 <div id="panel">
   <div class="panel-handle"></div>
   <div id="panel-head">
-    <div>
+    <div class="panel-head-text">
       <span id="panel-country"></span>
       <span id="panel-n"></span>
     </div>
@@ -426,63 +481,63 @@ a.card:hover { background: #F0EAE0; }
    ═══════════════════════════════════════════════════════════════ */
 const DATA = {
   "643": { pal:"D", name:"Россия", list:[
-    { n:"Исаак Левитан",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/4977382-isaak-levitan-vesna-v-italii" }] },
-    { n:"Илья Занковский",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/3812190-ilya-zankovskii" }] },
-    { n:"Алексей Савченко",  tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3652008-aleksei-savchenko" }] },
-    { n:"Николай Сергеев",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3083815-nikolai-sergeev" }] },
-    { n:"Пётр Суходольский", tags:["пейзажи","академизм"],articles:[{ u:"https://dtf.ru/s/art/2780980-petr-suhodolskii" }] },
-    { n:"Александр Головин", tags:["академизм"],          articles:[{ u:"https://dtf.ru/s/art/2526930-hudozhnik-aleksandr-golovin" }] },
-    { n:"Алексей Боголюбов", tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2274275-hudozhnik-aleksei-bogolyubov" }] },
-    { n:"Максим Воробьёв",   tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2039645-maksim-vorobyov-dub-razdroblennyj-molniej" }] },
-    { n:"Архип Куинджи",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/u/455288-dracubik/2015028-arhip-kuindzhi-krasnyj-zakat" }] },
-    { n:"Вильгельм Котарбинский", tags:["академизм","символизм"], articles:[{ u:"https://dtf.ru/s/art/2622736-vilgelm-kotarbinskii" }] }
+    { n:"Исаак Левитан", slug:"levitan",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/4977382-isaak-levitan-vesna-v-italii" }] },
+    { n:"Илья Занковский", slug:"zankovskiy",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/3812190-ilya-zankovskii" }] },
+    { n:"Алексей Савченко", slug:"savchenko",  tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3652008-aleksei-savchenko" }] },
+    { n:"Николай Сергеев", slug:"sergeev",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3083815-nikolai-sergeev" }] },
+    { n:"Пётр Суходольский", slug:"suhodolskiy", tags:["пейзажи","академизм"],articles:[{ u:"https://dtf.ru/s/art/2780980-petr-suhodolskii" }] },
+    { n:"Александр Головин", slug:"golovin", tags:["академизм"],          articles:[{ u:"https://dtf.ru/s/art/2526930-hudozhnik-aleksandr-golovin" }] },
+    { n:"Алексей Боголюбов", slug:"bogolubov", tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2274275-hudozhnik-aleksei-bogolyubov" }] },
+    { n:"Максим Воробьёв", slug:"vorobjev",   tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2039645-maksim-vorobyov-dub-razdroblennyj-molniej" }] },
+    { n:"Архип Куинджи", slug:"kuinzhi",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/u/455288-dracubik/2015028-arhip-kuindzhi-krasnyj-zakat" }] },
+    { n:"Вильгельм Котарбинский", slug:"kotabrinskiy", tags:["академизм","символизм"], articles:[{ u:"https://dtf.ru/s/art/2622736-vilgelm-kotarbinskii" }] }
   ]},
   "826": { pal:"C", name:"Великобритания", list:[
-    { n:"Джордж Фредерик Уоттс", tags:["символизм"],  articles:[{ u:"https://dtf.ru/art/3728204-dzhordzh-frederik-uotts" }] },
-    { n:"Джон Эткинсон Гримшоу", tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/3031558-dzhon-etkinson-grimshou" }] },
-    { n:"Джон Мартин",           tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/2908585-dzhon-martin" }] },
-    { n:"Уолтер Миган",          tags:["академизм"],  articles:[{ u:"https://dtf.ru/art/2869563-uolter-migan" }] },
-    { n:"Эдмунд Дюлак",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/s/art/2573802-edmund-dyulak" }] },
-    { n:"Эрнест Грисе",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/u/455288-dracubik/2413024-ernest-grise-cikada-i-sova" }] },
-    { n:"Фрэнк Кадоган Купер",   tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2744385-frenk-kadogan-kuper" }] },
-    { n:"Фрэнк Дикси",           tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2418970-frenk-diksi-bezzhalostnaya-krasavica" }] },
-    { n:"Данте Россетти",        tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] },
-    { n:"Элизабет Сиддал",       tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] }
+    { n:"Джордж Фредерик Уоттс", slug:"uotts", tags:["символизм"],  articles:[{ u:"https://dtf.ru/art/3728204-dzhordzh-frederik-uotts" }] },
+    { n:"Джон Эткинсон Гримшоу", slug:"grimshou", tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/3031558-dzhon-etkinson-grimshou" }] },
+    { n:"Джон Мартин", slug:"martin",           tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/2908585-dzhon-martin" }] },
+    { n:"Уолтер Миган", slug:"migan",          tags:["академизм"],  articles:[{ u:"https://dtf.ru/art/2869563-uolter-migan" }] },
+    { n:"Эдмунд Дюлак", slug:"dulak",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/s/art/2573802-edmund-dyulak" }] },
+    { n:"Эрнест Грисе", slug:"grise",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/u/455288-dracubik/2413024-ernest-grise-cikada-i-sova" }] },
+    { n:"Фрэнк Кадоган Купер", slug:"cuper",   tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2744385-frenk-kadogan-kuper" }] },
+    { n:"Фрэнк Дикси", slug:"dixy",           tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2418970-frenk-diksi-bezzhalostnaya-krasavica" }] },
+    { n:"Данте Россетти", slug:"rossetti",        tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] },
+    { n:"Элизабет Сиддал", slug:"siddal",       tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] }
   ]},
   "250": { pal:"B", name:"Франция", list:[
-    { n:"Леон-Жермен Пелуз",  tags:["пейзажи"], articles:[{ u:"https://dtf.ru/art/3954473-leon-zhermen-peluz-frantsuzskiy-hudozhnik" }] },
-    { n:"Фердинанд дю Пюигадо", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2602288-ferdinand-dyu-pyuigado" }] }
+    { n:"Леон-Жермен Пелуз", slug:"peluz",  tags:["пейзажи"], articles:[{ u:"https://dtf.ru/art/3954473-leon-zhermen-peluz-frantsuzskiy-hudozhnik" }] },
+    { n:"Фердинанд дю Пюигадо", slug:"puigado", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2602288-ferdinand-dyu-pyuigado" }] }
   ]},
   "392": { pal:"E", name:"Япония", list:[
-    { n:"Охара Косон",      tags:["пейзажи"], groups:["укиё-э"], articles:[{ u:"https://dtf.ru/s/art/2638333-ohara-koson" }] },
-    { n:"Хироо Исоно",      tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2775000-hiroo-isono" }] },
-    { n:"Kazuhiko Fukuoji", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2497126-kazuhiko-fukuoji" }] }
+    { n:"Охара Косон", slug:"koson",      tags:["пейзажи"], groups:["укиё-э"], articles:[{ u:"https://dtf.ru/s/art/2638333-ohara-koson" }] },
+    { n:"Хироо Исоно", slug:"isono",      tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2775000-hiroo-isono" }] },
+    { n:"Kazuhiko Fukuoji", slug:"fukuoji", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2497126-kazuhiko-fukuoji" }] }
   ]},
   "840": { pal:"D", name:"США", list:[
-    { n:"Марджори Миллер",    tags:["иллюстрации"], articles:[{ u:"https://dtf.ru/s/art/3280617-mardzhori-miller" }] },
-    { n:"Эллиот Дейнгерфилд", tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3444227-elliot-deingerfild" }] },
-    { n:"Максфилд Пэрриш",    tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3109331-maksfild-perrish" }] }
+    { n:"Марджори Миллер", slug:"miller",    tags:["иллюстрации"], articles:[{ u:"https://dtf.ru/s/art/3280617-mardzhori-miller" }] },
+    { n:"Эллиот Дейнгерфилд", slug:"dangerfild", tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3444227-elliot-deingerfild" }] },
+    { n:"Максфилд Пэрриш", slug:"parrish",    tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3109331-maksfild-perrish" }] }
   ]},
   "40":  { pal:"B", name:"Австрия", list:[
-    { n:"Йозеф Штойцнер", tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/2608357-iozef-shtoicner" }] },
-    { n:"Георг Джанни",   tags:["символизм","академизм"], articles:[{ u:"https://dtf.ru/art/4405640-georg-dzhanni" }] },
-    { n:"Franz Sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
+    { n:"Йозеф Штойцнер", slug:"shtoycer", tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/2608357-iozef-shtoicner" }] },
+    { n:"Георг Джанни", slug:"dzanni",   tags:["символизм","академизм"], articles:[{ u:"https://dtf.ru/art/4405640-georg-dzhanni" }] },
+    { n:"Franz Sedlacek", slug:"sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
   ]},
   "276": { pal:"A", name:"Германия", list:[
-    { n:"Генрих Гогартен", tags:["пейзажи"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
-    { n:"Зигфрид Задемак", tags:["сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2770448-zigfrid-zademak" }] }
+    { n:"Генрих Гогартен", slug:"gogarten", tags:["пейзажи"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
+    { n:"Зигфрид Задемак", slug:"zademak", tags:["сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2770448-zigfrid-zademak" }] }
   ]},
-  "578": { pal:"B", name:"Норвегия",   list:[{ n:"Теодор Киттельсен", tags:["пейзажи","академизм"], articles:[{ u:"https://dtf.ru/s/art/3215346-teodor-kittelsen" }] }] },
-  "528": { pal:"B", name:"Нидерланды", list:[{ n:"Ян Туроп",          tags:["символизм"],            articles:[{ u:"https://dtf.ru/art/3831173-yan-turopp-hudojnik-gollandii" }] }] },
-  "36":  { pal:"B", name:"Австралия",  list:[{ n:"Joshua Yeldham",    tags:["авангард"],             articles:[{ u:"https://dtf.ru/art/3800249-dzhoshua-yeldham-hudozhnik-avstralii" }] }] },
-  "484": { pal:"A", name:"Мексика",    list:[{ n:"Анхель Саррага",    tags:["академизм"],            articles:[{ u:"https://dtf.ru/s/art/2829566-anhel-sarraga" }] }] },
-  "246": { pal:"A", name:"Финляндия",  list:[{ n:"Хуго Симберг",      tags:["символизм"],            articles:[{ u:"https://dtf.ru/s/art/2805128-hugo-simberg" }] }] },
-  "170": { pal:"C", name:"Колумбия",   list:[{ n:"Алехандро Обрегон", tags:["авангард"],             articles:[{ u:"https://dtf.ru/s/art/2721481-alehandro-obregon" }] }] },
-  "56":  { pal:"C", name:"Бельгия",    list:[{ n:"Рене Магритт",      tags:["сюрреализм"],           articles:[{ u:"https://dtf.ru/u/455288-dracubik/2001636-rene-magritt-le-somnambule" }] }] },
-  "348": { pal:"C", name:"Венгрия",    list:[{ n:"Тивадар Костка Чонтвари", tags:["символизм"],      articles:[{ u:"https://dtf.ru/art/5087574-tividar-kostka-chontvari-zagadochnyj-hudozhnik" }] }] },
+  "578": { pal:"B", name:"Норвегия",   list:[{ n:"Теодор Киттельсен", slug:"kittelsen", tags:["пейзажи","академизм"], articles:[{ u:"https://dtf.ru/s/art/3215346-teodor-kittelsen" }] }] },
+  "528": { pal:"B", name:"Нидерланды", list:[{ n:"Ян Туроп", slug:"turop",          tags:["символизм"],            articles:[{ u:"https://dtf.ru/art/3831173-yan-turopp-hudojnik-gollandii" }] }] },
+  "36":  { pal:"B", name:"Австралия",  list:[{ n:"Joshua Yeldham", slug:"yeldham",    tags:["авангард"],             articles:[{ u:"https://dtf.ru/art/3800249-dzhoshua-yeldham-hudozhnik-avstralii" }] }] },
+  "484": { pal:"A", name:"Мексика",    list:[{ n:"Анхель Саррага", slug:"sarraga",    tags:["академизм"],            articles:[{ u:"https://dtf.ru/s/art/2829566-anhel-sarraga" }] }] },
+  "246": { pal:"A", name:"Финляндия",  list:[{ n:"Хуго Симберг", slug:"simberg",      tags:["символизм"],            articles:[{ u:"https://dtf.ru/s/art/2805128-hugo-simberg" }] }] },
+  "170": { pal:"C", name:"Колумбия",   list:[{ n:"Алехандро Обрегон", slug:"obregon", tags:["авангард"],             articles:[{ u:"https://dtf.ru/s/art/2721481-alehandro-obregon" }] }] },
+  "56":  { pal:"C", name:"Бельгия",    list:[{ n:"Рене Магритт", slug:"magrit",      tags:["сюрреализм"],           articles:[{ u:"https://dtf.ru/u/455288-dracubik/2001636-rene-magritt-le-somnambule" }] }] },
+  "348": { pal:"C", name:"Венгрия",    list:[{ n:"Тивадар Костка Чонтвари", slug:"chontvari", tags:["символизм"],      articles:[{ u:"https://dtf.ru/art/5087574-tividar-kostka-chontvari-zagadochnyj-hudozhnik" }] }] },
   "380": { pal:"C", name:"Италия", list:[
-    { n:"Галилео Чини",  tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/2938097-galileo-chini" }] },
-    { n:"Jean Calogero", tags:["сюрреализм"],  articles:[{ u:"https://dtf.ru/s/art/2707760-jean-calogero" }] }
+    { n:"Галилео Чини", slug:"chini",  tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/2938097-galileo-chini" }] },
+    { n:"Jean Calogero", slug:"calogero", tags:["сюрреализм"],  articles:[{ u:"https://dtf.ru/s/art/2707760-jean-calogero" }] }
   ]}
 };
 
@@ -587,6 +642,14 @@ function getClass(d) {
   return `country has-artists clr-${c.pal}${id === active ? ' active' : ''}`;
 }
 function updateMap() { if (paths) paths.attr('class', d => getClass(d)); }
+
+/* ─── PANEL POSITIONING ─────────────────────────────────────────────
+   Align panel top edge with map-wrap top (below both bars).
+   ─────────────────────────────────────────────────────────────────── */
+function updatePanelTop() {
+  panel.style.top = mapWrap.getBoundingClientRect().top + 'px';
+}
+window.addEventListener('resize', updatePanelTop);
 
 /* ─── IMAGE REGISTRY ───────────────────────────────────────────
    Хранит картинки по имени художника (ключ = поле n в DATA).
@@ -694,6 +757,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     });
 
     mapWrap.addEventListener('click', closePanel);
+    updatePanelTop();
   })
   .catch(() => { hint.textContent = 'Не удалось загрузить карту.'; });
 
@@ -749,31 +813,42 @@ function chipRow(a, country) {
   html += '</div>';
   return html;
 }
-function thumbsHtml(name, extraImgs) {
-  // Collect up to 3 sources: IMAGES[name] + extraImgs array + examples/ fallback
-  const srcs = [];
-  if (IMAGES[name]) srcs.push(IMAGES[name]);
-  (extraImgs || []).forEach(u => { if (srcs.length < 3) srcs.push(u); });
-  // Always try the examples/ fallback slot if we have room
-  const fallback = `examples/${encodeURIComponent(name)}.jpg`;
-  const needFallback = !IMAGES[name]; // only add fallback if no explicit primary
-  const imgs = srcs.map(src =>
-    `<img class="card-thumb" src="${src}" alt="" onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`
-  ).join('');
-  // Fallback img: hides itself + the whole strip if file doesn't exist
-  const fallbackImg = needFallback
-    ? `<img class="card-thumb" src="${fallback}" alt=""
-         onerror="var s=this.closest('.card-thumbs');if(s){s.remove()}"
-         onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`
-    : '';
-  const allImgs = imgs + fallbackImg;
-  if (!allImgs) return '';
-  return `<span class="card-thumbs">${allImgs}</span>`;
+function thumbsHtml(name, slug, extraImgs) {
+  /* Image sources priority:
+     1. IMAGES[name]  — base64 override (e.g. Dicksee already loaded)
+     2. examples/{slug}_1.jpg, examples/{slug}_2.jpg  — file-based
+     3. extraImgs[]   — any extra URLs set in data
+
+     Files are probed via <img onerror>: missing files hide themselves.
+     If the whole .card-thumbs strip ends up empty, it removes itself.
+  */
+  const mkImg = src =>
+    `<img class="card-thumb" src="${src}" alt=""` +
+    ` onerror="this.remove();var s=this.closest?.('.card-thumbs');if(s&&!s.children.length)s.remove()"` +
+    ` onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`;
+
+  const parts = [];
+
+  if (IMAGES[name]) {
+    // Explicit base64 override — always show, no onerror needed
+    parts.push(
+      `<img class="card-thumb" src="${IMAGES[name]}" alt=""` +
+      ` onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`
+    );
+  } else if (slug) {
+    parts.push(mkImg(`examples/${slug}_1.jpg`));
+    parts.push(mkImg(`examples/${slug}_2.jpg`));
+  }
+
+  (extraImgs || []).forEach(u => parts.push(mkImg(u)));
+
+  if (!parts.length) return '';
+  return `<span class="card-thumbs">${parts.join('')}</span>`;
 }
 /* country передаётся только в плоских списках (стиль/общество/подборки) —
    внутри панели конкретной страны он и так ясен из заголовка панели */
 function renderArtistCard(a, country) {
-  const thumbs = thumbsHtml(a.n, a.imgs);
+  const thumbs = thumbsHtml(a.n, a.slug, a.imgs);
   if (a.articles.length === 1) {
     const u = a.articles[0].u;
     const cached = TITLE_CACHE[u];
@@ -874,6 +949,10 @@ function closePanel() {
 }
 
 document.getElementById('close-btn').addEventListener('click', e => { e.stopPropagation(); closePanel(); });
+
+// Prevent D3's global touch listeners from swallowing panel scroll events
+panel.addEventListener('touchmove', e => e.stopPropagation(), { passive: true });
+panel.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
 backdrop.addEventListener('click', closePanel);
 </script>
 </body>
