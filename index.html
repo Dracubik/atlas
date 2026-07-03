@@ -197,7 +197,7 @@ header {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 360px;
+  width: min(48vw, 580px);
   z-index: 50;
   /* Solid base — blur added only on desktop via min-width query below */
   background: #FEFCF8;
@@ -213,9 +213,9 @@ header {
 /* Frosted glass only on desktop where GPU compositing is reliable */
 @media (min-width: 641px) {
   #panel {
-    background: rgba(252, 250, 246, 0.92);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: rgba(252, 250, 246, 0.78);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
   }
 }
 #panel.open { transform: translateX(0); }
@@ -249,7 +249,7 @@ header {
 #close-btn:hover { color: #1C1814; }
 #grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   padding: 6px 12px 20px;
   gap: 2px;
   overflow-y: auto;
@@ -525,7 +525,7 @@ const DATA = {
     { n:"Franz Sedlacek", slug:"sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
   ]},
   "276": { pal:"A", name:"Германия", list:[
-    { n:"Генрих Гогартен", slug:"gogarten", tags:["пейзажи"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
+    { n:"Генрих Гогартен", slug:"gogarten", tags:["пейзажи"], groups:["люминизм"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
     { n:"Зигфрид Задемак", slug:"zademak", tags:["сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2770448-zigfrid-zademak" }] }
   ]},
   "578": { pal:"B", name:"Норвегия",   list:[{ n:"Теодор Киттельсен", slug:"kittelsen", tags:["пейзажи","академизм"], articles:[{ u:"https://dtf.ru/s/art/3215346-teodor-kittelsen" }] }] },
@@ -562,11 +562,13 @@ const COLLECTIONS = [
    ═══════════════════════════════════════════════════════════════ */
 const CUSTOM_GROUPS = [
   { id:"прерафаэлиты", label:"Прерафаэлиты" },
-  { id:"укиё-э",        label:"Укиё-э" }
+  { id:"укиё-э",        label:"Укиё-э" },
+  { id:"люминизм",      label:"Люминизм" }
 ];
 const GROUP_COLORS = {
   "прерафаэлиты": "#6B5A3C",
-  "укиё-э":        "#8C3A3A"
+  "укиё-э":        "#8C3A3A",
+  "люминизм":      "#2A7A8A"
 };
 
 /* ─── ЦВЕТА СТИЛЕЙ (= фильтр карты + чипы + списки) ─── */
@@ -590,7 +592,8 @@ document.getElementById('h-stats').textContent = `${nC} стран · ${nA} ст
 /* ─── LISTS BAR ─── */
 const listsBar = document.getElementById('lists-bar');
 const LIST_ENTRIES = [
-  { id:'collections', label:'Подборки', type:'collections' },
+  { id:'collections', label:'Подборки',    type:'collections' },
+  { id:'all-articles', label:'Все статьи', type:'all-articles' },
   ...Object.keys(STYLE_COLORS).map(tag => ({ id: tag, label: cap(tag), type: 'style' })),
   ...CUSTOM_GROUPS.map(g => ({ id: g.id, label: g.label, type: 'group' }))
 ];
@@ -663,7 +666,7 @@ const IMAGES = {
 };
 
 /* ─── DTF TITLE FETCHING ─────────────────────────────────────────────
-   Async: renders panel immediately with "Читать на DTF →",
+   Async: renders panel immediately with "Читать →",
    then patches link texts once DTF API responds.
    api.dtf.ru/v2.9/entry/{id} is a public Osnova-platform endpoint.
    ─────────────────────────────────────────────────────────────────── */
@@ -700,6 +703,59 @@ async function fetchAndPatchTitles(urls) {
     const t = TITLE_CACHE[el.dataset.dtfUrl];
     if (t) el.textContent = t;
   });
+}
+
+/* ─── ASYNC IMAGE LOADER ────────────────────────────────────────────
+   Probes img formats in memory first; only adds <img> to DOM on success.
+   This eliminates layout gaps from pending/failed onerror chains.
+   ─────────────────────────────────────────────────────────────────── */
+async function probeSlug(slug, n, pos) {
+  for (const ext of ['jpg','jpeg','png']) {
+    const src = `examples/${slug}_${n}.${ext}`;
+    const ok = await new Promise(res => {
+      const t = new Image(); t.onload = ()=>res(true); t.onerror = ()=>res(false); t.src = src;
+    });
+    if (ok) {
+      const img = document.createElement('img');
+      img.className = 'card-thumb';
+      img.src = src;
+      if (pos) img.style.objectPosition = pos;
+      img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openLightbox(img.src); });
+      return img;
+    }
+  }
+  return null;
+}
+
+async function loadImagesForGrid(grid) {
+  if (!grid) return;
+  const cards = Array.from(grid.querySelectorAll('[data-slug]'));
+  await Promise.all(cards.map(async card => {
+    const slug = card.dataset.slug;
+    const pos  = card.dataset.imgpos || '';
+    if (!slug) return;
+    const nameEl = card.querySelector('.card-name');
+    const name = nameEl ? nameEl.textContent.trim() : '';
+    const imgs = [];
+    if (IMAGES[name]) {
+      const img = document.createElement('img');
+      img.className = 'card-thumb';
+      img.src = IMAGES[name];
+      if (pos) img.style.objectPosition = pos;
+      img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openLightbox(img.src); });
+      imgs.push(img);
+    } else {
+      const results = await Promise.all([1, 2].map(n => probeSlug(slug, n, pos)));
+      results.forEach(img => { if (img) imgs.push(img); });
+    }
+    if (!imgs.length) return;
+    const strip = document.createElement('span');
+    strip.className = 'card-thumbs';
+    imgs.forEach(img => strip.appendChild(img));
+    const anchor = card.querySelector('.card-arrow, .card-links');
+    if (anchor) anchor.before(strip);
+    else card.appendChild(strip);
+  }));
 }
 
 /* ─── LIGHTBOX ─── */
@@ -789,6 +845,7 @@ listsBar.addEventListener('click', e => {
   hint.classList.add('gone');
   tip.style.opacity = 0;
   if (btn.dataset.listType === 'collections') openCollectionsPanel();
+  else if (btn.dataset.listType === 'all-articles') openAllArticlesPanel();
   else openThematicListPanel(id, btn.textContent, btn.dataset.listType === 'group');
 });
 
@@ -871,15 +928,15 @@ function thumbsHtml(name, slug, extraImgs, imgPos) {
 /* country передаётся только в плоских списках (стиль/общество/подборки) —
    внутри панели конкретной страны он и так ясен из заголовка панели */
 function renderArtistCard(a, country) {
-  const thumbs = thumbsHtml(a.n, a.slug, a.imgs, a.imgPos);
+  /* Images are injected async by loadImagesForGrid() — no thumbs here */
   if (a.articles.length === 1) {
     const u = a.articles[0].u;
     const cached = TITLE_CACHE[u];
-    const label = a.articles[0].label || cached || 'Читать на DTF';
-    return `<a class="card" href="${u}" target="_blank" rel="noopener">
+    const label = a.articles[0].label || cached || 'Читать';
+    return `<a class="card" href="${u}" target="_blank" rel="noopener"
+        data-slug="${a.slug||''}" data-imgpos="${a.imgPos||''}">
       <span class="card-name">${a.n}</span>
       ${chipRow(a, country)}
-      ${thumbs}
       <span class="card-arrow" data-dtf-url="${u}">${label} →</span>
     </a>`;
   }
@@ -888,10 +945,10 @@ function renderArtistCard(a, country) {
     const label = art.label || cached || `Статья ${i + 1}`;
     return `<a class="card-sub" href="${art.u}" target="_blank" rel="noopener" data-dtf-url="${art.u}">${label} →</a>`;
   }).join('');
-  return `<div class="card-static">
+  return `<div class="card-static"
+      data-slug="${a.slug||''}" data-imgpos="${a.imgPos||''}">
     <span class="card-name">${a.n}</span>
     ${chipRow(a, country)}
-    ${thumbs}
     <div class="card-links">${links}</div>
   </div>`;
 }
@@ -902,7 +959,7 @@ function renderCollectionCard(c) {
   return `<a class="card" href="${c.u}" target="_blank" rel="noopener">
     <span class="card-name">${c.title}</span>
     ${thumb}
-    <span class="card-arrow">Читать на DTF →</span>
+    <span class="card-arrow">Читать →</span>
   </a>`;
 }
 
@@ -926,6 +983,7 @@ function openPanel(data) {
   // Fetch real article titles from DTF API in background
   const urls = data.list.filter(matchesFilter).flatMap(a => a.articles.map(x => x.u));
   fetchAndPatchTitles(urls);
+  loadImagesForGrid(document.getElementById('grid'));
 }
 
 /* ─── ПОДБОРКИ ─── */
@@ -937,6 +995,24 @@ function openCollectionsPanel() {
     : `<div class="card-static"><span class="card-name" style="color:#A09688;font-weight:400">Здесь появятся подборки — добавь ссылки в массив COLLECTIONS.</span></div>`;
   panel.classList.add('open');
   backdrop.classList.add('visible');
+}
+
+/* ─── ВСЕ СТАТЬИ — полный список без фильтра ────────────────────── */
+function openAllArticlesPanel() {
+  const rows = [];
+  Object.values(DATA).forEach(country => {
+    country.list.forEach(a => rows.push({ a, country }));
+  });
+  rows.sort((x, y) => x.a.n.localeCompare(y.a.n, 'ru'));
+  const total = rows.reduce((s, { a }) => s + a.articles.length, 0);
+  document.getElementById('panel-country').textContent = 'Все статьи';
+  document.getElementById('panel-n').textContent = `${total} материалов`;
+  document.getElementById('grid').innerHTML = rows.map(({ a, country }) => renderArtistCard(a, country)).join('');
+  panel.classList.add('open');
+  backdrop.classList.add('visible');
+  const urls = rows.flatMap(({ a }) => a.articles.map(x => x.u));
+  fetchAndPatchTitles(urls);
+  loadImagesForGrid(document.getElementById('grid'));
 }
 
 /* ─── ПЛОСКИЙ ТЕМАТИЧЕСКИЙ СПИСОК (стиль/общество), без карты ─── */
@@ -961,6 +1037,7 @@ function openThematicListPanel(tagId, label, isGroup) {
   if (rows.length) {
     const urls = rows.flatMap(({ a }) => a.articles.map(x => x.u));
     fetchAndPatchTitles(urls);
+    loadImagesForGrid(document.getElementById('grid'));
   }
 }
 
