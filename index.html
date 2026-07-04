@@ -213,7 +213,7 @@ header {
 /* Frosted glass only on desktop where GPU compositing is reliable */
 @media (min-width: 641px) {
   #panel {
-    background: rgba(252, 250, 246, 0.78);
+    background: rgba(252, 250, 246, 0.72);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
   }
@@ -249,9 +249,9 @@ header {
 #close-btn:hover { color: #1C1814; }
 #grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  padding: 6px 12px 20px;
-  gap: 2px;
+  grid-template-columns: 1fr;
+  padding: 0;
+  gap: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
   overscroll-behavior: contain;      /* don't propagate scroll to map */
@@ -275,6 +275,17 @@ header {
 .card-thumbs > :nth-child(n+3) { display: none; }
 /* Single image: don't stretch — cap width so it looks like a thumbnail */
 .card-thumbs > img:only-child { max-width: 52%; }
+/* ── CARD LAYOUT ──────────────────────────────────────────────────── */
+a.card, div.card-static {
+  display: block;
+  padding: 13px 16px 11px;
+  border-bottom: 1px solid rgba(229, 222, 210, 0.55);
+  transition: background 0.12s;
+}
+a.card:last-child, div.card-static:last-child { border-bottom: none; }
+a.card { text-decoration: none; }
+a.card:hover { background: rgba(240, 234, 224, 0.65); }
+
 .card-name {
   display: block;
   font-size: 13px;
@@ -407,7 +418,7 @@ header {
     height: auto;
     max-height: none;
     overflow: visible;
-    padding: 6px 14px 40px;
+    padding: 0 0 40px;
     flex: none;
     display: grid;
     grid-template-columns: 1fr;
@@ -661,6 +672,7 @@ window.addEventListener('resize', updatePanelTop);
    2. Если не найдено — пробует examples/<имя>.jpg (фоллбек).
    Чтобы добавить картинку: IMAGES["Имя художника"] = "URL или data:";
    ─────────────────────────────────────────────────────────────── */
+const IMAGES = {}; /* add base64 overrides here if needed */
 
 /* ─── DTF TITLE FETCHING ─────────────────────────────────────────────
    Async: renders panel immediately with "Читать →",
@@ -724,8 +736,10 @@ async function probeSlug(slug, n, pos) {
   return null;
 }
 
+let _gridGen = 0;
 async function loadImagesForGrid(grid) {
   if (!grid) return;
+  const gen = ++_gridGen;
   const cards = Array.from(grid.querySelectorAll('[data-slug]'));
   await Promise.all(cards.map(async card => {
     const slug = card.dataset.slug;
@@ -746,6 +760,8 @@ async function loadImagesForGrid(grid) {
       results.forEach(img => { if (img) imgs.push(img); });
     }
     if (!imgs.length) return;
+    if (gen !== _gridGen || !document.contains(card)) return;
+    card.querySelector('.card-thumbs')?.remove();
     const strip = document.createElement('span');
     strip.className = 'card-thumbs';
     imgs.forEach(img => strip.appendChild(img));
