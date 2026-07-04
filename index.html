@@ -213,7 +213,7 @@ header {
 /* Frosted glass only on desktop where GPU compositing is reliable */
 @media (min-width: 641px) {
   #panel {
-    background: rgba(252, 250, 246, 0.52);
+    background: rgba(252, 250, 246, 0.72);
     backdrop-filter: blur(22px);
     -webkit-backdrop-filter: blur(22px);
   }
@@ -252,6 +252,7 @@ header {
   grid-template-columns: 1fr;
   padding: 0;
   gap: 0;
+  align-items: start;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
   overscroll-behavior: contain;      /* don't propagate scroll to map */
@@ -260,27 +261,33 @@ header {
   min-height: 0;
 }
 /* Image strip: below name+chips, max 2 images */
-.card-thumbs { display: flex; gap: 5px; margin-top: 8px; }
+.card-thumbs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
 .card-thumb {
-  height: 110px;
-  flex: 1 1 0;
-  min-width: 0;
-  border-radius: 6px;
+  /* Fixed slot: always 1/3 of card width regardless of image count */
+  flex: 0 0 calc(33.333% - 3px);
+  width: calc(33.333% - 3px);
+  height: 120px;
+  border-radius: 5px;
   object-fit: cover;
-  object-position: center 20%;  /* show upper portion — better for portraits */
+  object-position: center 20%;
   cursor: zoom-in;
   box-shadow: 0 0 0 1px rgba(28,24,20,0.10);
   display: block;
 }
-.card-thumbs > :nth-child(n+3) { display: none; }
-/* Single image: don't stretch — cap width so it looks like a thumbnail */
-.card-thumbs > img:only-child { max-width: 52%; }
 /* ── CARD LAYOUT ──────────────────────────────────────────────────── */
 a.card, div.card-static {
   display: block;
   padding: 13px 16px 11px;
   border-bottom: 1px solid rgba(229, 222, 210, 0.55);
   transition: background 0.12s;
+  overflow: hidden;  /* prevent ghost strips from creating extra height */
+  min-height: 0;
 }
 a.card:last-child, div.card-static:last-child { border-bottom: none; }
 a.card { text-decoration: none; }
@@ -756,7 +763,7 @@ async function loadImagesForGrid(grid) {
       img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openLightbox(img.src); });
       imgs.push(img);
     } else {
-      const results = await Promise.all([1, 2].map(n => probeSlug(slug, n, pos)));
+      const results = await Promise.all([1, 2, 3].map(n => probeSlug(slug, n, pos)));
       results.forEach(img => { if (img) imgs.push(img); });
     }
     if (!imgs.length) return;
@@ -883,60 +890,6 @@ function chipRow(a, country) {
   html += tags.map(t => `<span class="chip" style="background:${chipColor(t)}">${cap(t)}</span>`).join('');
   html += '</div>';
   return html;
-}
-function thumbsHtml(name, slug, extraImgs, imgPos) {
-  /* Image sources priority:
-     1. IMAGES[name]  — base64 override (e.g. Dicksee already loaded)
-     2. examples/{slug}_1.jpg, examples/{slug}_2.jpg  — file-based
-     3. extraImgs[]   — any extra URLs set in data
-
-     Files are probed via <img onerror>: missing files hide themselves.
-     If the whole .card-thumbs strip ends up empty, it removes itself.
-  */
-  // Try formats in order: jpg → jpeg → png
-  // onerror chains through formats, removes img only if all fail
-  const mkImg = (slug, n) => {
-    const exts = ['jpg','jpeg','png'];
-    const srcs = exts.map(e => `examples/${slug}_${n}.${e}`);
-    const cleanup = `var s=this.closest?.('.card-thumbs');if(s&&!s.children.length)s.remove()`;
-    // Build chained onerror: try next format, or remove if last
-    const onerrors = srcs.map((src, i) =>
-      i < srcs.length - 1
-        ? `this.src='${srcs[i+1]}'`
-        : `this.remove();${cleanup}`
-    );
-    return `<img class="card-thumb" src="${srcs[0]}" alt=""` +
-      ` onerror="${onerrors[0]}"` +
-      ` data-srcs="${srcs.join(',')}" data-errs="${onerrors.join('|')}"` +
-      ` onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`;
-  };
-
-  // Simpler chained onerror via inline attribute
-  const mkImgChained = (slug, n, pos) => {
-    const base = `examples/${slug}_${n}`;
-    const cleanup = `var s=this.closest?.('.card-thumbs');if(s&&!s.children.length)s.remove()`;
-    return `<img class="card-thumb" src="${base}.jpg" alt=""` +
-      ` onerror="if(this.dataset.t==='1'){this.dataset.t='2';this.src='${base}.jpeg';}else if(this.dataset.t==='2'){this.dataset.t='3';this.src='${base}.png';}else{this.remove();${cleanup}}" data-t="1"${pos?` style="object-position:${pos}"`:''}` +
-      ` onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`;
-  };
-
-  const parts = [];
-
-  if (IMAGES[name]) {
-    const posStyle = imgPos ? ` style="object-position:${imgPos}"` : '';
-    parts.push(
-      `<img class="card-thumb" src="${IMAGES[name]}" alt=""${posStyle}` +
-      ` onclick="event.preventDefault();event.stopPropagation();openLightbox(this.src)">`
-    );
-  } else if (slug) {
-    parts.push(mkImgChained(slug, 1, imgPos));
-    parts.push(mkImgChained(slug, 2, imgPos));
-  }
-
-  (extraImgs || []).forEach(u => parts.push(mkImg(u)));
-
-  if (!parts.length) return '';
-  return `<span class="card-thumbs">${parts.join('')}</span>`;
 }
 /* country передаётся только в плоских списках (стиль/общество/подборки) —
    внутри панели конкретной страны он и так ясен из заголовка панели */
