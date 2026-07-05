@@ -510,7 +510,7 @@ const DATA = {
   "392": { pal:"E", name:"Япония", list:[
     { n:"Охара Косон", slug:"koson",      tags:["пейзажи"], groups:["укиё-э"], articles:[{ u:"https://dtf.ru/s/art/2638333-ohara-koson" }] },
     { n:"Хироо Исоно", slug:"isono",      tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2775000-hiroo-isono" }] },
-    { n:"Kazuhiko Fukuoji", slug:"fukuoji", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2497126-kazuhiko-fukuoji" }] }
+    { n:"Кадзухико Фукуодзи", slug:"fukuoji", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2497126-kazuhiko-fukuoji" }] }
   ]},
   "840": { pal:"D", name:"США", list:[
     { n:"Марджори Миллер", slug:"miller",    tags:["иллюстрации"], articles:[{ u:"https://dtf.ru/s/art/3280617-mardzhori-miller" }] },
@@ -520,7 +520,7 @@ const DATA = {
   "40":  { pal:"B", name:"Австрия", list:[
     { n:"Йозеф Штойцнер", slug:"shtoycer", tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/2608357-iozef-shtoicner" }] },
     { n:"Георг Джанни", slug:"dzanni",   tags:["символизм","академизм"], articles:[{ u:"https://dtf.ru/art/4405640-georg-dzhanni" }] },
-    { n:"Franz Sedlacek", slug:"sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
+    { n:"Франц Седлачек", slug:"sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
   ]},
   "276": { pal:"A", name:"Германия", list:[
     { n:"Генрих Гогартен", slug:"gogarten", tags:["пейзажи"], groups:["люминизм"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
@@ -701,6 +701,8 @@ async function fetchAndPatchTitles(urls) {
   });
 }
 
+let _gridGen = 0;
+
 /* ─── IMAGE LOADER ───────────────────────────────────────────────────
    Inserts strips synchronously (hidden imgs), each img reveals on load.
    Strip has zero height until at least one image loads — no ghost gaps.
@@ -764,9 +766,7 @@ function loadImagesForGrid(grid) {
   });
 }
 
-let _gridGen = 0;
-
-/* ─── LIGHTBOX* ─── LIGHTBOX ─── */
+/* ─── LIGHTBOX ─── */
 function openLightbox(src) { lightboxImg.src = src; lightbox.classList.add('open'); }
 function closeLightbox() { lightbox.classList.remove('open'); lightboxImg.src = ''; }
 lightbox.addEventListener('click', closeLightbox);
