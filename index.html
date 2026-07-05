@@ -253,10 +253,7 @@ header {
   padding: 0;
   gap: 0;
   align-items: start;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
-  overscroll-behavior: contain;      /* don't propagate scroll to map */
-  touch-action: pan-y;
+  align-content: start;  /* KEY: pack rows to top, no space distribution */
   flex: 1;
   min-height: 0;
 }
@@ -266,7 +263,6 @@ header {
   gap: 4px;
   margin-top: 8px;
   flex-wrap: nowrap;
-  overflow: hidden;
 }
 .card-thumb {
   /* Fixed slot: always 1/3 of card width regardless of image count */
@@ -283,11 +279,10 @@ header {
 /* ── CARD LAYOUT ──────────────────────────────────────────────────── */
 a.card, div.card-static {
   display: block;
+  width: 100%;
   padding: 13px 16px 11px;
   border-bottom: 1px solid rgba(229, 222, 210, 0.55);
   transition: background 0.12s;
-  overflow: hidden;  /* prevent ghost strips from creating extra height */
-  min-height: 0;
 }
 a.card:last-child, div.card-static:last-child { border-bottom: none; }
 a.card { text-decoration: none; }
@@ -420,16 +415,13 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
   }
   #panel-country { font-size: 17px; }
 
-  /* Grid: natural height, no overflow — panel scrolls */
+  /* Grid: natural height — panel scrolls */
   #grid {
     height: auto;
-    max-height: none;
     overflow: visible;
     padding: 0 0 40px;
     flex: none;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2px;
+    gap: 0;
   }
 
   .card-thumb { height: 88px; }
@@ -721,64 +713,72 @@ async function fetchAndPatchTitles(urls) {
   });
 }
 
-/* ─── ASYNC IMAGE LOADER ────────────────────────────────────────────
-   Probes img formats in memory first; only adds <img> to DOM on success.
-   This eliminates layout gaps from pending/failed onerror chains.
-   ─────────────────────────────────────────────────────────────────── */
-async function probeSlug(slug, n, pos) {
-  for (const ext of ['jpg','jpeg','png']) {
-    const src = `examples/${slug}_${n}.${ext}`;
-    const ok = await new Promise(res => {
-      const t = new Image(); t.onload = ()=>res(true); t.onerror = ()=>res(false); t.src = src;
-    });
-    if (ok) {
-      const img = document.createElement('img');
-      img.className = 'card-thumb';
-      img.src = src;
-      if (pos) img.style.objectPosition = pos;
-      img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openLightbox(img.src); });
-      return img;
-    }
-  }
-  return null;
-}
+/* ─── IMAGE LOADER ───────────────────────────────────────────────────
+   Inserts strips synchronously (hidden imgs), each img reveals on load.
+   Strip has zero height until at least one image loads — no ghost gaps.
+   ─────────────────────────────────────────────────────────────────── */ = 0;
 
-let _gridGen = 0;
-async function loadImagesForGrid(grid) {
+function loadImagesForGrid(grid) {
   if (!grid) return;
   const gen = ++_gridGen;
-  const cards = Array.from(grid.querySelectorAll('[data-slug]'));
-  await Promise.all(cards.map(async card => {
+
+  grid.querySelectorAll('[data-slug]').forEach(card => {
+    if (gen !== _gridGen) return;
     const slug = card.dataset.slug;
-    const pos  = card.dataset.imgpos || '';
     if (!slug) return;
-    const nameEl = card.querySelector('.card-name');
-    const name = nameEl ? nameEl.textContent.trim() : '';
-    const imgs = [];
+    const pos = card.dataset.imgpos || '';
+
+    // Remove any existing strip
+    card.querySelector('.card-thumbs')?.remove();
+
+    const strip = document.createElement('span');
+    strip.className = 'card-thumbs';
+
+    // Override: check IMAGES registry first
+    const name = card.querySelector('.card-name')?.textContent?.trim() || '';
     if (IMAGES[name]) {
       const img = document.createElement('img');
       img.className = 'card-thumb';
       img.src = IMAGES[name];
       if (pos) img.style.objectPosition = pos;
-      img.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openLightbox(img.src); });
-      imgs.push(img);
+      img.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation(); openLightbox(img.src);
+      });
+      strip.appendChild(img);
     } else {
-      const results = await Promise.all([1, 2, 3].map(n => probeSlug(slug, n, pos)));
-      results.forEach(img => { if (img) imgs.push(img); });
+      [1, 2, 3].forEach(n => {
+        const img = document.createElement('img');
+        img.className = 'card-thumb';
+        img.style.display = 'none'; // hidden until loaded
+        if (pos) img.style.objectPosition = pos;
+        img.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation(); openLightbox(img.src);
+        });
+
+        const base = `examples/${slug}_${n}`;
+        const exts = ['jpg', 'jpeg', 'png'];
+        let i = 0;
+        const tryNext = () => {
+          if (i < exts.length) { img.src = `${base}.${exts[i++]}`; }
+          else { img.remove(); } // all formats failed
+        };
+        img.onerror = tryNext;
+        img.onload  = () => { img.style.display = 'block'; };
+
+        strip.appendChild(img);
+        tryNext();
+      });
     }
-    if (!imgs.length) return;
-    if (gen !== _gridGen || !document.contains(card)) return;
-    card.querySelector('.card-thumbs')?.remove();
-    const strip = document.createElement('span');
-    strip.className = 'card-thumbs';
-    imgs.forEach(img => strip.appendChild(img));
+
     const anchor = card.querySelector('.card-arrow, .card-links');
     if (anchor) anchor.before(strip);
     else card.appendChild(strip);
-  }));
+  });
 }
 
-/* ─── LIGHTBOX ─── */
+let _gridGen = 0;
+
+/* ─── LIGHTBOX* ─── LIGHTBOX ─── */
 function openLightbox(src) { lightboxImg.src = src; lightbox.classList.add('open'); }
 function closeLightbox() { lightbox.classList.remove('open'); lightboxImg.src = ''; }
 lightbox.addEventListener('click', closeLightbox);
