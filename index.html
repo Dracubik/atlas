@@ -195,7 +195,8 @@ header {
 /* ── PANEL — right-side frosted glass overlay ──────────────────── */
 #panel {
   position: fixed;
-  right: 0;
+  /* Slide via 'right' — avoids transform+overflow-y scroll bug in Chrome/Safari */
+  right: calc(-1 * min(48vw, 580px) - 40px); /* closed: off-screen */
   top: 0;
   bottom: 0;
   width: min(48vw, 580px);
@@ -203,12 +204,11 @@ header {
   background: #FEFCF8;
   border-left: 1px solid rgba(229, 222, 210, 0.65);
   box-shadow: -6px 0 36px rgba(28, 24, 18, 0.13);
-  transform: translateX(110%);
-  transition: transform 0.26s cubic-bezier(.4,0,.2,1);
+  transition: right 0.26s cubic-bezier(.4,0,.2,1);
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;           /* panel itself scrolls on desktop */
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 /* Frosted glass only on desktop where GPU compositing is reliable */
@@ -219,7 +219,7 @@ header {
     -webkit-backdrop-filter: blur(22px);
   }
 }
-#panel.open { transform: translateX(0); }
+#panel.open { right: 0; }
 .panel-handle { display: none; }
 #panel-head {
   display: flex;
@@ -373,11 +373,10 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
   /* Panel is itself the scroll container — most reliable on iOS/Android */
   #panel {
     position: fixed;
-    right: 0; left: 0; bottom: 0;
+    right: 0 !important; left: 0; bottom: 0;
     top: auto !important;
     width: 100% !important;
     z-index: 50;
-    transform: none !important;
     height: 0;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
@@ -428,7 +427,7 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
     <span class="h-title">Атлас живописи</span>
     <span class="h-by">by Dracubik</span>
   </div>
-  <span class="h-stats" id="h-stats"></span><span class="h-ver">v15</span>
+  <span class="h-stats" id="h-stats"></span><span class="h-ver">v16</span>
 </header>
 
 <div id="lists-bar" class="bar">
