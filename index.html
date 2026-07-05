@@ -73,6 +73,7 @@ header {
   margin-left: auto;
   white-space: nowrap;
 }
+.h-ver { font-size: 10px; color: #C8B090; margin-left: 8px; }
 
 /* ── BARS ────────────────────────────────────── */
 .bar {
@@ -248,12 +249,9 @@ header {
 }
 #close-btn:hover { color: #1C1814; }
 #grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  padding: 0;
-  gap: 0;
-  align-items: start;
-  align-content: start;  /* KEY: pack rows to top, no space distribution */
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 24px;
   flex: 1;
   min-height: 0;
 }
@@ -261,7 +259,7 @@ header {
 .card-thumbs {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
+  margin: 6px 0 0;
   flex-wrap: nowrap;
 }
 .card-thumb {
@@ -401,27 +399,17 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
     background: #D8D0C4;
     border-radius: 2px;
     margin: 10px auto 4px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
   }
   #panel-head {
     padding: 8px 18px 10px;
-    position: sticky;
-    top: 24px; /* below handle */
     background: #FEFCF8;
     border-bottom: 1px solid #EDE7DC;
-    z-index: 1;
   }
   #panel-country { font-size: 17px; }
 
-  /* Grid: natural height — panel scrolls */
   #grid {
-    height: auto;
-    overflow: visible;
-    padding: 0 0 40px;
     flex: none;
-    gap: 0;
+    padding: 0 0 48px;
   }
 
   .card-thumb { height: 88px; }
@@ -438,7 +426,7 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
     <span class="h-title">Атлас живописи</span>
     <span class="h-by">by Dracubik</span>
   </div>
-  <span class="h-stats" id="h-stats"></span>
+  <span class="h-stats" id="h-stats"></span><span class="h-ver">v15</span>
 </header>
 
 <div id="lists-bar" class="bar">
