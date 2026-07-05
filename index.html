@@ -254,6 +254,11 @@ header {
   padding: 0 0 24px;
   flex: 1;
   min-height: 0;
+  overflow-y: auto; /* Включаем вертикальный скролл */
+  scrollbar-width: none; /* Прячем скроллбар в Firefox (опционально) */
+}
+#grid::-webkit-scrollbar { 
+  display: none; /* Прячем скроллбар в Chrome/Safari (опционально) */
 }
 /* Image strip: below name+chips, max 2 images */
 .card-thumbs {
