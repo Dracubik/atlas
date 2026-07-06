@@ -97,7 +97,24 @@ header {
   padding-right: 4px;
 }
 #lists-bar { background: #F0E8DA; }
-#lists-bar .pill { border-color: #D2C2A6; }
+#lists-bar .pill {
+  display: flex;
+  justify-content: space-between; /* Раскидывает элементы по краям */
+  align-items: center;
+  width: 100%;
+}
+.pill-info {
+  font-size: 13px; /* Чуть крупнее */
+  padding: 8px 12px; /* Огромная невидимая зона для уверенного клика */
+  margin: -8px -12px -8px 0; /* Компенсируем padding, чтобы не ломать верстку кнопки */
+  opacity: 0.5;
+  cursor: pointer;
+  pointer-events: all;
+  transition: opacity 0.12s;
+}
+.pill-info:hover {
+  opacity: 1;
+}
 #lists-bar .pill:hover { background: #E5D5BC; }
 #filters-bar { background: #FAF8F3; }
 
@@ -372,15 +389,16 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
 #info-popup.open { display: block; }
 
 .info-popup-meta {
-  font-size: 11px;
-  color: #A09688;
-  margin-bottom: 10px;
+  font-size: 13px; /* Было 11px, стало крупнее и читабельнее */
+  color: #8C7D70;
+  margin-bottom: 12px;
   font-style: italic;
 }
 .info-popup-text {
-  font-size: 13.5px; /* Чуть крупнее */
+  font-size: 13.5px;
   line-height: 1.6;
   color: #2C2420;
+  white-space: pre-wrap; /* Магия переносов строк */
 }
 /* Поддержка базового HTML в описаниях */
 .info-popup-text p { margin-bottom: 8px; }
@@ -820,8 +838,9 @@ const infoPopupText  = document.getElementById('info-popup-text');
 function showInfoPopup(meta, text, anchorEl) {
   infoPopupMeta.textContent = meta || '';
   infoPopupMeta.style.display = meta ? 'block' : 'none';
-  // Заменяем textContent на innerHTML для поддержки тегов (<p>, <b> и т.д.)
-  infoPopupText.innerHTML = text; 
+  
+  // Возвращаем textContent. CSS сделает всю работу с абзацами.
+  infoPopupText.textContent = text; 
   infoPopup.classList.add('open');
 
   // Position near anchor, stay in viewport
