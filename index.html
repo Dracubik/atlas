@@ -853,7 +853,8 @@ document.addEventListener('click', e => {
   // Artist bio button
   const bioBtn = e.target.closest('.info-btn[data-bio-slug]');
   if (bioBtn) {
-    e.stopPropagation();
+    e.preventDefault();  // КРИТИЧНО: Запрещает переход по ссылке DTF
+    e.stopPropagation(); // Останавливает всплытие события
     const d = BIOS[bioBtn.dataset.bioSlug];
     if (d) showInfoPopup(d.years || '', d.text, bioBtn);
     return;
@@ -861,6 +862,7 @@ document.addEventListener('click', e => {
   // Style/group info span inside a pill
   const styleSpan = e.target.closest('.pill-info[data-style-key]');
   if (styleSpan) {
+    e.preventDefault();
     e.stopPropagation();
     const d = STYLES_INFO[styleSpan.dataset.styleKey];
     if (d) showInfoPopup(d.period || '', d.text, styleSpan);
@@ -1041,6 +1043,9 @@ filtersBar.addEventListener('click', e => {
 
 /* ─── LISTS BAR EVENTS ─── */
 listsBar.addEventListener('click', e => {
+  // Игнорируем клик, если он пришелся по инфо-значку
+  if (e.target.closest('.pill-info')) return; 
+
   const btn = e.target.closest('.pill');
   if (!btn) return;
   const id  = btn.dataset.listId;
