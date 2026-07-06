@@ -544,6 +544,166 @@ const DATA = {
 /* ═══════════════════════════════════════════════════════════════
    ПОДБОРКИ — отдельные тематические статьи (не художники по странам)
    Формат: { title:"Название", u:"URL", img:"URL картинки" (необязательно) }
+   ══════════════   border-top: 1px solid #E5DED2;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.16);
+    background: #FEFCF8 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* grid scrolls freely inside */
+    display: block;
+  }
+  #panel.open { height: 78svh; }
+
+  /* Handle and head stick to the top while content scrolls */
+  .panel-handle {
+    display: block;
+    width: 36px; height: 4px;
+    background: #D8D0C4;
+    border-radius: 2px;
+    margin: 10px auto 4px;
+  }
+  #panel-head {
+    padding: 8px 18px 10px;
+    background: #FEFCF8;
+    border-bottom: 1px solid #EDE7DC;
+  }
+  #panel-country { font-size: 17px; }
+
+  #grid {
+    padding: 0 0 48px;
+  }
+
+  .card-thumb { height: 88px; }
+  #backdrop.visible { display: block; }
+  #hint { display: none; }
+  #reset-btn { bottom: 8px; right: 8px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-brand">
+    <span class="h-title">Атлас живописи</span>
+    <span class="h-by">by Dracubik</span>
+  </div>
+  <span class="h-stats" id="h-stats"></span><span class="h-ver">v16</span>
+</header>
+
+<div id="lists-bar" class="bar">
+  <span class="bar-label">Списки</span>
+</div>
+
+<div id="filters-bar" class="bar">
+  <span class="bar-label">Стиль карты</span>
+</div>
+
+<div id="map-wrap">
+  <svg id="world-svg" viewBox="0 0 960 480" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="tip"></div>
+  <div id="hint">Выделенные страны — нажмите для просмотра статей</div>
+  <button id="reset-btn" title="Сбросить масштаб">↺</button>
+</div>
+
+<div id="panel">
+  <div class="panel-handle"></div>
+  <div id="panel-head">
+    <div class="panel-head-text">
+      <span id="panel-country"></span>
+      <span id="panel-n"></span>
+    </div>
+    <button id="close-btn" aria-label="Закрыть">×</button>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<div id="backdrop"></div>
+
+<div id="lightbox">
+  <button id="lightbox-close" aria-label="Закрыть превью">×</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ДАННЫЕ — ХУДОЖНИКИ ПО СТРАНАМ
+
+   Запись художника:
+     {
+       n: "Имя",
+       tags:   ["стиль", ...],          — стили (= фильтр карты, = списки)
+       groups: ["прерафаэлиты", ...],   — доп. тематические общества (необязательно)
+       img:    "URL картинки",          — превью-миниатюра (необязательно)
+       articles: [{ label:"...", u:"URL" }, ...]   — можно несколько
+     }
+   ═══════════════════════════════════════════════════════════════ */
+const DATA = {
+  "643": { pal:"D", name:"Россия", list:[
+    { n:"Исаак Левитан", slug:"levitan",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/4977382-isaak-levitan-vesna-v-italii" }] },
+    { n:"Илья Занковский", slug:"zankovskiy",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/art/3812190-ilya-zankovskii" }] },
+    { n:"Алексей Савченко", slug:"savchenko",  tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3652008-aleksei-savchenko" }] },
+    { n:"Николай Сергеев", slug:"sergeev",   tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/3083815-nikolai-sergeev" }] },
+    { n:"Пётр Суходольский", slug:"suhodolskiy", tags:["пейзажи","академизм"],articles:[{ u:"https://dtf.ru/s/art/2780980-petr-suhodolskii" }] },
+    { n:"Александр Головин", slug:"golovin", tags:["академизм"],          articles:[{ u:"https://dtf.ru/s/art/2526930-hudozhnik-aleksandr-golovin" }] },
+    { n:"Алексей Боголюбов", slug:"bogolubov", tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2274275-hudozhnik-aleksei-bogolyubov" }] },
+    { n:"Максим Воробьёв", slug:"vorobjev",   tags:["академизм"],          articles:[{ u:"https://dtf.ru/u/455288-dracubik/2039645-maksim-vorobyov-dub-razdroblennyj-molniej" }] },
+    { n:"Архип Куинджи", slug:"kuinzhi",     tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/u/455288-dracubik/2015028-arhip-kuindzhi-krasnyj-zakat" }] },
+    { n:"Вильгельм Котарбинский", slug:"kotabrinskiy", tags:["академизм","символизм"], articles:[{ u:"https://dtf.ru/s/art/2622736-vilgelm-kotarbinskii" }] }
+  ]},
+  "826": { pal:"C", name:"Великобритания", list:[
+    { n:"Джордж Фредерик Уоттс", slug:"uotts", tags:["символизм"],  articles:[{ u:"https://dtf.ru/art/3728204-dzhordzh-frederik-uotts" }] },
+    { n:"Джон Эткинсон Гримшоу", slug:"grimshou", tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/3031558-dzhon-etkinson-grimshou" }] },
+    { n:"Джон Мартин", slug:"martin",           tags:["академизм"],  articles:[{ u:"https://dtf.ru/s/art/2908585-dzhon-martin" }] },
+    { n:"Уолтер Миган", slug:"migan",          tags:["академизм"],  articles:[{ u:"https://dtf.ru/art/2869563-uolter-migan" }] },
+    { n:"Эдмунд Дюлак", slug:"dulak",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/s/art/2573802-edmund-dyulak" }] },
+    { n:"Эрнест Грисе", slug:"grise",          tags:["иллюстрации"],articles:[{ u:"https://dtf.ru/u/455288-dracubik/2413024-ernest-grise-cikada-i-sova" }] },
+    { n:"Фрэнк Кадоган Купер", slug:"cuper",   tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2744385-frenk-kadogan-kuper" }] },
+    { n:"Фрэнк Дикси", slug:"dixy",           tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/s/art/2418970-frenk-diksi-bezzhalostnaya-krasavica" }] },
+    { n:"Данте Россетти", slug:"rossetti",        tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] },
+    { n:"Элизабет Сиддал", slug:"siddal",       tags:[], groups:["прерафаэлиты"], articles:[{ u:"https://dtf.ru/art/5008031-dante-rossetti-i-elizabet-siddal" }] }
+  ]},
+  "250": { pal:"B", name:"Франция", list:[
+    { n:"Леон-Жермен Пелуз", slug:"peluz",  tags:["пейзажи"], articles:[{ u:"https://dtf.ru/art/3954473-leon-zhermen-peluz-frantsuzskiy-hudozhnik" }] },
+    { n:"Фердинанд дю Пюигадо", slug:"puigado", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2602288-ferdinand-dyu-pyuigado" }] }
+  ]},
+  "392": { pal:"E", name:"Япония", list:[
+    { n:"Охара Косон", slug:"koson",      tags:["пейзажи"], groups:["укиё-э"], articles:[{ u:"https://dtf.ru/s/art/2638333-ohara-koson" }] },
+    { n:"Хироо Исоно", slug:"isono",      tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2775000-hiroo-isono" }] },
+    { n:"Кадзухико Фукуодзи", slug:"fukuoji", tags:["пейзажи"], articles:[{ u:"https://dtf.ru/s/art/2497126-kazuhiko-fukuoji" }] }
+  ]},
+  "840": { pal:"D", name:"США", list:[
+    { n:"Марджори Миллер", slug:"miller",    tags:["иллюстрации"], articles:[{ u:"https://dtf.ru/s/art/3280617-mardzhori-miller" }] },
+    { n:"Эллиот Дейнгерфилд", slug:"dangerfild", tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3444227-elliot-deingerfild" }] },
+    { n:"Максфилд Пэрриш", slug:"parrish",    tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/3109331-maksfild-perrish" }] }
+  ]},
+  "40":  { pal:"B", name:"Австрия", list:[
+    { n:"Йозеф Штойцнер", slug:"shtoycer", tags:["пейзажи"],            articles:[{ u:"https://dtf.ru/s/art/2608357-iozef-shtoicner" }] },
+    { n:"Георг Джанни", slug:"dzanni",   tags:["символизм","академизм"], articles:[{ u:"https://dtf.ru/art/4405640-georg-dzhanni" }] },
+    { n:"Франц Седлачек", slug:"sedlacek", tags:["символизм","сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2744077-franz-sedlacek" }] }
+  ]},
+  "276": { pal:"A", name:"Германия", list:[
+    { n:"Генрих Гогартен", slug:"gogarten", tags:["пейзажи"], groups:["люминизм"],    articles:[{ u:"https://dtf.ru/s/art/2928465-genrih-gogarten" }] },
+    { n:"Зигфрид Задемак", slug:"zademak", tags:["сюрреализм"], articles:[{ u:"https://dtf.ru/s/art/2770448-zigfrid-zademak" }] }
+  ]},
+  "578": { pal:"B", name:"Норвегия",   list:[{ n:"Теодор Киттельсен", slug:"kittelsen", tags:["пейзажи","академизм"], articles:[{ u:"https://dtf.ru/s/art/3215346-teodor-kittelsen" }] }] },
+  "528": { pal:"B", name:"Нидерланды", list:[{ n:"Ян Туроп", slug:"turop",          tags:["символизм"],            articles:[{ u:"https://dtf.ru/art/3831173-yan-turopp-hudojnik-gollandii" }] }] },
+  "36":  { pal:"B", name:"Австралия",  list:[{ n:"Джошуа Йелдэм", slug:"yeldham",    tags:["авангард"],             articles:[{ u:"https://dtf.ru/art/3800249-dzhoshua-yeldham-hudozhnik-avstralii" }] }] },
+  "484": { pal:"A", name:"Мексика",    list:[{ n:"Анхель Саррага", slug:"sarraga",    tags:["академизм"],            articles:[{ u:"https://dtf.ru/s/art/2829566-anhel-sarraga" }] }] },
+  "246": { pal:"A", name:"Финляндия",  list:[{ n:"Хуго Симберг", slug:"simberg",      tags:["символизм"],            articles:[{ u:"https://dtf.ru/s/art/2805128-hugo-simberg" }] }] },
+  "170": { pal:"C", name:"Колумбия",   list:[{ n:"Алехандро Обрегон", slug:"obregon", tags:["авангард"],             articles:[{ u:"https://dtf.ru/s/art/2721481-alehandro-obregon" }] }] },
+  "56":  { pal:"C", name:"Бельгия",    list:[{ n:"Рене Магритт", slug:"magrit",      tags:["сюрреализм"],           articles:[{ u:"https://dtf.ru/u/455288-dracubik/2001636-rene-magritt-le-somnambule" }] }] },
+  "348": { pal:"C", name:"Венгрия",    list:[{ n:"Тивадар Костка Чонтвари", slug:"chontvari", tags:["символизм"],      articles:[{ u:"https://dtf.ru/art/5087574-tividar-kostka-chontvari-zagadochnyj-hudozhnik" }] }] },
+  "380": { pal:"C", name:"Италия", list:[
+    { n:"Галилео Чини", slug:"chini",  tags:["академизм"],   articles:[{ u:"https://dtf.ru/s/art/2938097-galileo-chini" }] },
+    { n:"Жан Калоджеро", slug:"calogero", tags:["сюрреализм"],  articles:[{ u:"https://dtf.ru/s/art/2707760-jean-calogero" }] }
+  ]}
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   ПОДБОРКИ — отдельные тематические статьи (не художники по странам)
+   Формат: { title:"Название", u:"URL", img:"URL картинки" (необязательно) }
    ═══════════════════════════════════════════════════════════════ */
 const COLLECTIONS = [
   { title:"Извержение Везувия в живописи",                 u:"https://dtf.ru/s/art/2507350-izverzhenie-vezuviya-v-zhivopisi" },
