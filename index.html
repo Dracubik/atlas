@@ -767,8 +767,7 @@ LIST_ENTRIES.forEach(entry => {
   b.dataset.listId = entry.id;
   b.dataset.listType = entry.type;
   const hasInfo = entry.type === 'style' || entry.type === 'group';
-  b.innerHTML = entry.label +
-    (hasInfo ? `<span class="pill-info" data-style-key="${entry.id}" title="О направлении">ⓘ</span>` : '');
+  b.innerHTML = entry.label
   listsBar.appendChild(b);
 });
 
