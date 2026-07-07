@@ -893,6 +893,17 @@ document.addEventListener('click', e => {
     if (d) showInfoPopup(d.years || '', d.text, bioBtn);
     return;
   }
+
+  // Значок справки в ЗАГОЛОВКЕ ОТКРЫТОЙ ПАНЕЛИ
+  const panelInfoBtn = e.target.closest('#panel-title-info');
+  if (panelInfoBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const d = STYLES_INFO[panelInfoBtn.dataset.styleKey];
+    if (d) showInfoPopup(d.period || '', d.text, panelInfoBtn);
+    return;
+  }
+
   // Style/group info span inside a pill
   const styleSpan = e.target.closest('.pill-info[data-style-key]');
   if (styleSpan) {
