@@ -914,20 +914,42 @@ const infoPopupText  = document.getElementById('info-popup-text');
 function showInfoPopup(meta, text, anchorEl) {
   infoPopupMeta.textContent = meta || '';
   infoPopupMeta.style.display = meta ? 'block' : 'none';
-  
-  // Возвращаем textContent. CSS сделает всю работу с абзацами.
   infoPopupText.textContent = text; 
+  
+  // 1. Показываем окно, чтобы браузер смог его отрисовать и посчитать габариты
   infoPopup.classList.add('open');
 
-  // Position near anchor, stay in viewport
+  // 2. Считываем РЕАЛЬНЫЕ размеры окна с уже вставленным текстом
+  const pRect = infoPopup.getBoundingClientRect();
+  const pw = pRect.width;
+  const ph = pRect.height; 
+
+  // 3. Берем координаты элемента, по которому кликнули
   const r = anchorEl.getBoundingClientRect();
-  const pw = 320, ph = 250; // Подкорректировал ожидаемые размеры для расчета
+  
+  // 4. Начинаем расчет позиции
   let left = r.right + 10;
   let top  = r.top;
-  if (left + pw > window.innerWidth - 8)  left = r.left - pw - 10;
-  if (left < 8)                           left = 8;
-  if (top  + ph > window.innerHeight - 8) top  = window.innerHeight - ph - 8;
-  if (top  < 8)                           top  = 8;
+
+  // Если не влезает по ширине — кидаем влево от кнопки
+  if (left + pw > window.innerWidth - 8) {
+    left = r.left - pw - 10;
+  }
+  // Если всё равно уехало за левый край — прижимаем к левому краю экрана
+  if (left < 8) {
+    left = 8;
+  }
+  
+  // Если не влезает по ВЫСОТЕ (теперь ph — это реальная высота, а не статичное число)
+  if (top + ph > window.innerHeight - 8) {
+    top = window.innerHeight - ph - 8;
+  }
+  // Если уехало за верхний край экрана
+  if (top < 8) {
+    top = 8;
+  }
+
+  // 5. Применяем вычисленные координаты
   infoPopup.style.left = left + 'px';
   infoPopup.style.top  = top  + 'px';
 }
