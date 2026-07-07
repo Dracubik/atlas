@@ -1223,7 +1223,13 @@ function openThematicListPanel(tagId, label, isGroup) {
   });
   rows.sort((x, y) => x.a.n.localeCompare(y.a.n, 'ru'));
 
-  document.getElementById('panel-country').textContent = label;
+  if (STYLES_INFO && STYLES_INFO[tagId]) { 
+      // Если по этому tagId (например, "ukiyo-e") есть справка, клеим кликабельный значок
+      document.getElementById('panel-country').textContent = `${label} <span id="panel-title-info" data-style-key="${tagId}">ⓘ</span>`;
+    } else {
+      // Если справки в базе нет — просто выводим чистый текст
+      document.getElementById('panel-country').textContent = label;
+    }
   document.getElementById('panel-n').textContent = `${rows.length} ${pluralArt(rows.length)}`;
   document.getElementById('grid').innerHTML = rows.length
     ? rows.map(({ a, country }) => renderArtistCard(a, country)).join('')
