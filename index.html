@@ -97,9 +97,38 @@ header {
   padding-right: 4px;
 }
 #lists-bar { background: #F0E8DA; }
-#lists-bar .pill { border-color: #D2C2A6; }
-#lists-bar .pill:hover { background: #E5D5BC; }
 #filters-bar { background: #FAF8F3; }
+/* --- Кнопки в боковом меню (твои цвета + новая разметка) --- */
+#lists-bar .pill { 
+  border-color: #D2C2A6; /* Твоя рамка */
+  
+  /* Разметка, чтобы отодвинуть значок далеко вправо */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  gap: 16px; 
+}
+
+#lists-bar .pill:hover { 
+  background: #E5D5BC; /* Твой цвет при наведении */
+}
+
+/* --- Сам значок в боковом меню (чтобы он был кликабельным и стоял справа) --- */
+.pill-info {
+  font-size: 13px;
+  padding: 8px 12px; /* Огромная кликабельная зона вокруг значка */
+  margin-left: auto; /* Жестко прижимает значок к правому краю */
+  margin-right: -8px; 
+  opacity: 0.5;
+  cursor: pointer;
+  pointer-events: all;
+  transition: opacity 0.12s;
+  flex-shrink: 0; 
+}
+
+.pill-info:hover {
+  opacity: 1;
+}
 
 .pill {
   padding: 4px 13px;
