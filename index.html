@@ -391,22 +391,26 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
 /* ⓘ on artist cards */
 .card-name-row {
   display: flex;
-  align-items: baseline;
-  gap: 5px;
+  align-items: center;
+  justify-content: flex-start; /* КРИТИЧНО: запрещает элементам разлетаться по краям */
+  gap: 6px; /* Жестко заданное небольшое расстояние между именем и значком */
 }
 .info-btn {
-  font-size: 14px; /* Увеличили */
-  color: #C0B4A8;
-  padding: 4px 6px; /* Увеличили зону клика */
-  margin-left: 4px;
+  font-size: 16px; /* Сделали крупнее */
+  color: #C47448; /* Сделали цветным (терракотовый акцент) */
+  background: transparent;
+  border: none;
+  padding: 4px; /* Оставили комфортную зону клика */
+  margin: 0; /* Убрали старые margin, так как теперь работает gap */
   flex-shrink: 0;
-  border-radius: 4px;
-  transition: color 0.12s, background 0.12s;
-  line-height: 1;
+  cursor: pointer;
+  transition: color 0.12s, transform 0.12s; /* Плавность анимации */
 }
+
+/* Эффект при наведении */
 .info-btn:hover { 
-  color: #C47448; 
-  background: rgba(196, 116, 72, 0.08); /* Небольшой подсвет при наведении */
+  color: #A35A33; /* Чуть более темный оттенок при наведении */
+  transform: scale(1.15); /* Легкое приятное увеличение значка */
 }
 
 /* Отдвигаем значок внутри списков */
