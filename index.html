@@ -417,11 +417,32 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
 }
 #info-popup.open { display: block; }
 
-.info-popup-meta {
-  font-size: 13px; /* Было 11px, стало крупнее и читабельнее */
+/* --- Крестик закрытия --- */
+#info-popup-close {
+  position: absolute; /* Отвязываем от потока документа */
+  top: 12px;          /* Прибиваем к верхнему краю */
+  right: 16px;        /* Прибиваем к правому краю */
+  font-size: 26px;    /* Делаем крупнее */
+  line-height: 1;
   color: #8C7D70;
-  margin-bottom: 12px;
-  font-style: italic;
+  cursor: pointer;
+  padding: 4px;       /* Увеличиваем зону клика */
+  background: none;
+  border: none;
+  z-index: 10;
+}
+#info-popup-close:hover {
+  color: #2C2420;
+}
+
+.info-popup-meta {
+  font-size: 16px;       /* Крупнее */
+  font-weight: 700;      /* Жирный */
+  text-align: center;    /* По центру */
+  color: #2C2420;
+  margin-top: 4px;       /* Отступаем от верха, чтобы не липло к крестику */
+  margin-bottom: 16px;
+  font-style: normal;    /* Убираем курсив, с жирным он спорит */
 }
 .info-popup-text {
   font-size: 13.5px;
@@ -915,7 +936,7 @@ function hideInfoPopup() { infoPopup.classList.remove('open'); }
 
 document.getElementById('info-popup-close')
   .addEventListener('click', e => { e.stopPropagation(); hideInfoPopup(); });
-  
+
 const bottomCloseBtn = document.getElementById('info-popup-close-bottom');
 if (bottomCloseBtn) {
   bottomCloseBtn.addEventListener('click', () => {
