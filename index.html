@@ -1225,7 +1225,7 @@ function openThematicListPanel(tagId, label, isGroup) {
 
   if (STYLES_INFO && STYLES_INFO[tagId]) { 
       // Если по этому tagId (например, "ukiyo-e") есть справка, клеим кликабельный значок
-      document.getElementById('panel-country').textContent = `${label} <span id="panel-title-info" data-style-key="${tagId}">ⓘ</span>`;
+      document.getElementById('panel-country').innerHTML = `${label} <span id="panel-title-info" data-style-key="${tagId}">ⓘ</span>`;
     } else {
       // Если справки в базе нет — просто выводим чистый текст
       document.getElementById('panel-country').textContent = label;
