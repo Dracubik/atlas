@@ -275,7 +275,6 @@ header {
   gap: 8px; /* Расстояние от текста до значка */
 }
 
-/* --- А это просто вставляешь следом: --- */
 #panel-title-info {
   font-size: 22px; 
   color: #C47448;  /* Терракотовый акцент */
@@ -536,6 +535,27 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
   #hint { display: none; }
   #reset-btn { bottom: 8px; right: 8px; }
 }
+
+/* --- Нижняя кнопка закрытия --- */
+#info-popup-close-bottom {
+  display: block;
+  width: 100%;
+  margin-top: 24px; /* Отделяем от текста справки */
+  padding: 12px;
+  background: #F0E8DA; /* Твой фирменный бежевый фон */
+  color: #2C2420; /* Темный текст для контраста */
+  border: 1px solid #D2C2A6; /* Рамка в тон */
+  border-radius: 8px; /* Слегка скругляем углы */
+  font-size: 15px;
+  font-family: inherit; /* Наследуем твой красивый шрифт */
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#info-popup-close-bottom:hover {
+  background: #E5D5BC; /* Подсветка при наведении, как у кнопок меню */
+}
+
 </style>
 </head>
 <body>
@@ -586,6 +606,8 @@ a.card:hover { background: rgba(240, 234, 224, 0.65); }
   <button id="info-popup-close" aria-label="Закрыть">×</button>
   <div id="info-popup-meta" class="info-popup-meta"></div>
   <div id="info-popup-text" class="info-popup-text"></div>
+
+  <button id="info-popup-close-bottom">Закрыть</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -893,7 +915,13 @@ function hideInfoPopup() { infoPopup.classList.remove('open'); }
 
 document.getElementById('info-popup-close')
   .addEventListener('click', e => { e.stopPropagation(); hideInfoPopup(); });
-
+  
+const bottomCloseBtn = document.getElementById('info-popup-close-bottom');
+if (bottomCloseBtn) {
+  bottomCloseBtn.addEventListener('click', () => {
+    infoPopup.classList.remove('open');
+  });
+}
 // Click outside closes popup
 document.addEventListener('click', e => {
   if (!infoPopup.contains(e.target) && !e.target.closest('.info-btn, .pill-info'))
